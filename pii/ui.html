@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PII &amp; Residency Auditor</title>
+<style>
+:root{--bg:#f6f7f9;--panel:#fff;--ink:#14181f;--mute:#5d6674;--line:#e2e5ea;--accent:#2a5bd7;--crit:#b3261e;--high:#c2410c;--med:#a16207;--low:#0e7490;--ok:#157f4b;--chip:#eef1f5}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--panel:#171b23;--ink:#e8ebf0;--mute:#98a1b0;--line:#2a303b;--accent:#7aa2ff;--crit:#ff8a80;--high:#fb923c;--med:#facc15;--low:#22d3ee;--ok:#5fd39a;--chip:#232936}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line)}header h1{font-size:17px;margin:0;font-weight:650}.badges{margin-left:auto;display:flex;gap:8px}
+.badge{font-size:12px;padding:2px 9px;border:1px solid var(--line);border-radius:999px;color:var(--mute);background:var(--bg)}
+main{display:grid;grid-template-columns:320px 1fr;gap:20px;padding:20px 24px;max-width:1300px;margin:auto}@media(max-width:960px){main{grid-template-columns:1fr;padding:16px}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}.card h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0 0 10px;font-weight:600}
+label{display:block;font-size:12px;color:var(--mute);margin:8px 0 3px}select,input{font:inherit;color:var(--ink);width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px}
+.srcs label{display:flex;gap:6px;align-items:center;color:var(--ink);font-size:13px;margin:4px 0}.srcs input{width:auto}
+button{font:inherit;background:var(--accent);color:#fff;border:0;border-radius:6px;padding:8px 14px;font-weight:600;cursor:pointer;margin-top:12px;width:100%}button:disabled{opacity:.5;cursor:wait}
+.hist{list-style:none;margin:0;padding:0}.hist li{display:flex;gap:8px;align-items:center;padding:7px 6px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:6px}.hist li:hover,.hist li.sel{background:var(--bg)}
+.banner{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:16px 18px;border-radius:10px;margin-bottom:16px;border:1px solid var(--line);background:var(--panel)}.big{font-size:24px;font-weight:750}.p-critical .big{color:var(--crit)}.p-attention .big{color:var(--med)}.p-clean .big{color:var(--ok)}
+.m{color:var(--mute);font-size:13px}.tiles{display:flex;gap:10px;margin-left:auto}.tile{text-align:center;padding:6px 14px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}.tile b{display:block;font-size:20px}.tile span{font-size:11px;color:var(--mute);text-transform:uppercase}
+.f{border:1px solid var(--line);border-left:5px solid var(--low);border-radius:8px;padding:10px 14px;margin:10px 0;background:var(--panel)}.f.critical{border-left-color:var(--crit)}.f.high{border-left-color:var(--high)}.f.medium{border-left-color:var(--med)}
+.h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.sev{font-size:11px;font-weight:700;text-transform:uppercase}.sev.critical{color:var(--crit)}.sev.high{color:var(--high)}.sev.medium{color:var(--med)}.sev.low{color:var(--low)}
+.chip{font-size:11px;padding:1px 7px;border-radius:4px;background:var(--chip);color:var(--mute)}.chip.pub{background:color-mix(in srgb,var(--crit) 16%,transparent);color:var(--crit);font-weight:600}.chip.broad{background:color-mix(in srgb,var(--high) 16%,transparent);color:var(--high)}
+.mask{font:13px ui-monospace,Menlo,monospace;font-weight:600}.res{font:12px ui-monospace,Menlo,monospace;color:var(--mute);word-break:break-all}
+.cmd{font:11px ui-monospace,Menlo,monospace;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:5px 8px;margin:4px 0;word-break:break-all}
+.err{color:var(--crit);font-size:13px;margin-top:8px}.warn{background:color-mix(in srgb,var(--med) 16%,transparent);color:var(--med);padding:8px 12px;border-radius:8px;margin-bottom:10px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:5px 6px;text-align:left;border-bottom:1px solid var(--line)}th{font-size:11px;text-transform:uppercase;color:var(--mute)}
+</style>
+</head>
+<body>
+<header><h1>PII &amp; Residency Auditor</h1><span class="badge">where personal data lives, who can read it, and whether policy allows it</span><div class="badges" id="badges"></div></header>
+<main>
+<aside>
+ <div class="card"><h2>Scan</h2>
+  <label>Project</label><select id="proj"></select>
+  <label>Datasets (allow-listed)</label><div class="srcs" id="dsl"></div><label>Buckets (allow-listed)</label><div class="srcs" id="bkl"></div>
+  <label class="srcs"><span style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="sample" checked> sample rows (masked; values are never stored)</span></label>
+  <label>Model commentary</label><select id="llm"></select>
+  <button id="go">Audit</button><div class="err" id="err"></div></div>
+ <div class="card"><h2>Recent audits</h2><ul class="hist" id="hist"></ul></div>
+</aside>
+<section id="out"><div class="card m" style="padding:40px;text-align:center">Run an audit. Reports contain column names, PII types, counts and masked examples only.</div></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let cfg={},cur=null;
+async function api(p,o){const r=await fetch(p,o);const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.detail||r.statusText);return b}
+async function init(){cfg=await api("/api/config");$("badges").innerHTML=`<span class="badge">model: ${esc(cfg.provider)}</span><span class="badge">residency: ${esc(Object.entries(cfg.policy.residency).map(([k,v])=>k+"→"+v.join("/")).join(" · "))}</span>`;
+ $("proj").innerHTML=cfg.projects.map(p=>`<option>${esc(p)}</option>`).join("");$("llm").innerHTML=cfg.allowed_providers.map(p=>`<option ${p===cfg.provider?"selected":""}>${esc(p)}</option>`).join("");
+ $("dsl").innerHTML=cfg.datasets.map(s=>`<label><input type="checkbox" name="ds" value="${esc(s)}" checked> ${esc(s)}</label>`).join("")||'<span class="m">none configured</span>';
+ $("bkl").innerHTML=cfg.buckets.map(s=>`<label><input type="checkbox" name="bk" value="${esc(s)}" checked> ${esc(s)}</label>`).join("")||'<span class="m">none configured</span>';
+ $("go").onclick=go;await hist();const h=location.hash.slice(1);if(h)show(await api("/api/audits/"+h))}
+async function hist(){const rows=await api("/api/audits?limit=15");$("hist").innerHTML=rows.map(r=>`<li data-id="${esc(r.id)}" class="${cur===r.id?"sel":""}"><b>${esc(r.posture)}</b><span class="m">${r.findings.length} findings</span></li>`).join("")||`<li class="m" style="cursor:default">none yet</li>`;
+ document.querySelectorAll("#hist li[data-id]").forEach(li=>li.onclick=async()=>show(await api("/api/audits/"+li.dataset.id)))}
+async function go(){$("err").textContent="";$("go").disabled=true;$("go").textContent="Auditing…";
+ const pick=n=>[...document.querySelectorAll(`input[name=${n}]:checked`)].map(i=>i.value);
+ try{show(await api("/api/audits",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({project:$("proj").value,datasets:pick("ds"),buckets:pick("bk"),sample:$("sample").checked,llm:$("llm").value})}));await hist()}
+ catch(e){$("err").textContent=e.message}finally{$("go").disabled=false;$("go").textContent="Audit"}}
+const CL={restricted:"pub",confidential:"broad"};
+function show(r){cur=r.id;location.hash=r.id;
+ const asset=a=>`<tr><td><b>${esc(a.name)}</b><div class="res">${esc(a.kind.replace("_"," "))}${a.note?" · "+esc(a.note):""}</div></td><td>${esc(a.location||"?")}</td><td><span class="chip ${CL[a.data_class]||""}">${esc(a.data_class)}</span></td><td>${a.columns.filter(c=>c.pii_types.length).map(c=>`<span class="chip">${esc(c.column)} → ${esc(c.pii_types.join("/"))}${c.evidence==="name_only"?" (name)":""}${c.undocumented?" ⚠":""}</span>`).join(" ")||'<span class="m">none</span>'}</td><td>${a.cmek?"CMEK":"google-managed"}</td></tr>`;
+ const card=f=>`<div class="f ${f.severity}"><div class="h"><span class="sev ${f.severity}">${f.severity}</span><b>${esc(f.title)}</b><span class="chip">${esc(f.id)}</span><span class="chip ${CL[f.data_class]||""}">${esc(f.data_class)}</span>${f.access?`<span class="chip ${f.access.level==="public"?"pub":f.access.level==="broad"?"broad":""}">access: ${esc(f.access.level)}</span>`:""}</div>
+  <div class="res">${esc(f.asset)}</div><div class="m">${esc(f.detail)}</div>${f.note?`<div style="margin-top:4px"><b>note:</b> ${esc(f.note)}</div>`:""}${f.remediation.map(c=>`<div class="cmd">${esc(c)}</div>`).join("")}</div>`;
+ const pc={compliant:"p-clean",attention:"p-attention",violations:"p-critical"}[r.posture];
+ $("out").innerHTML=`<div class="banner ${pc}"><div><div class="big">${esc(r.posture.toUpperCase())}</div><div class="m">${esc(r.project)} · ${(r.duration_ms/1000).toFixed(1)}s · ${esc(r.provider)}</div></div><div class="tiles">${["critical","high","medium","low"].map(k=>`<div class="tile"><b>${r.counts[k]||0}</b><span>${k}</span></div>`).join("")}</div></div>
+ <div class="card"><h2>Summary</h2>${esc(r.summary)}</div>${r.degraded.map(d=>`<div class="warn">⚠ ${esc(d)}</div>`).join("")}
+ <div class="card"><h2>Inventory (${r.assets.length} assets)</h2><table><thead><tr><th>asset</th><th>location</th><th>class</th><th>personal data columns</th><th>encryption</th></tr></thead><tbody>${r.assets.map(asset).join("")}</tbody></table></div>
+ <div class="card"><h2>Findings (${r.findings.length})</h2>${r.findings.map(card).join("")||"<div class='m'>No policy findings.</div>"}${r.dropped.length?`<h2 style="margin-top:14px">Rejected model output</h2>`+r.dropped.map(d=>`<div class="m">✗ ${esc(d.item)} — ${esc(d.reason)}</div>`).join(""):""}</div>`;
+ document.querySelectorAll("#hist li").forEach(li=>li.classList.toggle("sel",li.dataset.id===r.id))}
+init().catch(e=>{$("err").textContent=e.message});
+</script>
+</body>
+</html>
