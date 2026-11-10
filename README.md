@@ -17,6 +17,12 @@ counted and dropped: reports contain column names, PII types, counts and masked 
 
 Default policy: restricted data US-only, confidential data US or EU, CMEK required for restricted data, at most 10 readers on restricted data. Change it with `PII_POLICY` or `--policy`.
 
+## Architecture
+
+[![Architecture: private Cloud Run service, engine, read-only sources, optional Gemini, up.sh delivery](docs/img/architecture.png)](docs/img/architecture.svg)
+
+Regenerate with `python3 docs/diagrams/architecture.py` then `python3 docs/diagrams/render.py docs/img/architecture.svg docs/img/architecture.png` (needs Playwright).
+
 ## Quick start
 
 ```bash
