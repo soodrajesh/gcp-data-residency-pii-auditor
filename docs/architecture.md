@@ -1,5 +1,7 @@
 # Architecture
 
+[![Architecture diagram](img/architecture.png)](img/architecture.svg)
+
 ```
 BigQuery (datasets: location, ACL, CMEK, expiration; tables: schema, rows)      GCS (buckets: location, public?, CMEK; CSV/JSONL/TSV/text objects)
         |  first 50 rows of native tables (allow-listed datasets only)               first 64 KB of up to 40 objects (allow-listed buckets only)
